@@ -14,14 +14,13 @@ class SouShu8Login:
         self.password = password
         self.questionid = questionid
         self.answer = answer
-        self.formhash = None
         self.proxies = proxies
 
     @classmethod
     def user_qiandao(cls, hostname, username, password, questionid='0', answer=None, proxies=None):
         user = SouShu8Login(hostname, username, password, questionid, answer, proxies)
         user.login()
-        # user.space()
+        user.space()
         user.credit()
 
     def form_hash(self):
@@ -37,7 +36,6 @@ class SouShu8Login:
             "user-agent": self.userAgent,
         }
         loginhash, formhash = self.form_hash()
-        self.formhash = formhash
         login_url = f'https://{self.hostname}/member.php?mod=logging&action=login&loginsubmit=yes&loginhash={loginhash}&inajax=1'
         form_data = {
             'formhash': formhash,
@@ -66,24 +64,32 @@ class SouShu8Login:
 
         print("昵称: %s 银币: %s" % (self.username, hcredit_2))
 
+    def space_form_hash(self):
+        rst = self.session.get(f'https://{self.hostname}/home.php').text
+        formhash = re.search(r'<input type="hidden" name="formhash" value="(.+?)" />', rst).group(1)
+        return formhash
+
     def space(self):
         headers = {
             "origin": f'https://{self.hostname}',
             "referer": f'https://{self.hostname}/home.php',
             "user-agent": self.userAgent,
+            'Content-Type': 'application/x-www-form-urlencoded'
         }
+        formhash = self.space_form_hash()
         space_url = f"https://{self.hostname}/home.php?mod=spacecp&ac=doing&handlekey=doing&inajax=1"
-        form_data = {
-            "message": "%BF%AA%D0%C4%D7%AC%D2%F8%B1%D2",
-            "addsubmit": "true",
-            "spacenote": "true",
-            "referer": "home.php",
-            "formhash": self.formhash
-        }
+
         for x in range(5):
+            form_data = {
+                "message": "开心赚银币 {0} 次".format(x + 1).encode("GBK"),
+                "addsubmit": "true",
+                "spacenote": "true",
+                "referer": "home.php",
+                "formhash": formhash
+            }
             resp = self.session.post(space_url, proxies=self.proxies, data=form_data, headers=headers)
-            if resp.status_code == 200:
-                print(f'发布成功!')
+            if re.search("操作成功", resp.text):
+                print('第 {} 次发布成功!'.format(x + 1))
             time.sleep(120)
 
 
