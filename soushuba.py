@@ -3,71 +3,80 @@
 实现搜书吧论坛登入和发布空间动态
 """
 import re
+import sys
+from copy import copy
+
 import requests
 from bs4 import BeautifulSoup
 import time
+import logging
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+ch = logging.StreamHandler(stream=sys.stdout)
+ch.setLevel(logging.INFO)
+ch.setFormatter(formatter)
+logger.addHandler(ch)
 
 
 class SouShuBaClient:
-    userAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"
 
-    def __init__(self, hostname, username, password, questionid='0', answer=None, proxies=None):
-        self.session = requests.session()
+    def __init__(self, hostname: str, proxies: dict | None = None):
+        self.session: requests.Session = requests.Session()
         self.hostname = hostname
-        self.username = username
-        self.password = password
-        self.questionid = questionid
-        self.answer = answer
+        self._common_headers = {
+            "Host": f"{ hostname }",
+            "Connection": "keep-alive",
+            "Accept": "*/*",
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+            "Accept-Language": "zh-CN,cn;q=0.9",
+        }
         self.proxies = proxies
 
-    @classmethod
-    def user_qiandao(cls, hostname, username, password, questionid='0', answer=None, proxies=None):
-        user = SouShuBaClient(hostname, username, password, questionid, answer, proxies)
-        user.login()
-        user.space()
-        user.credit()
+        self.username = None
 
-    def form_hash(self):
+    def login_form_hash(self):
         rst = self.session.get(f'https://{self.hostname}/member.php?mod=logging&action=login').text
         loginhash = re.search(r'<div id="main_messaqge_(.+?)">', rst).group(1)
         formhash = re.search(r'<input type="hidden" name="formhash" value="(.+?)" />', rst).group(1)
         return loginhash, formhash
 
-    def login(self):
-        headers = {
-            "origin": f'https://{self.hostname}',
-            "referer": f'https://{self.hostname}/',
-            "user-agent": self.userAgent,
-        }
-        loginhash, formhash = self.form_hash()
+    def login(self, username: str, password: str, questionid: str = '0', answer: str = None):
+        """Login with username and password"""
+        loginhash, formhash = self.login_form_hash()
         login_url = f'https://{self.hostname}/member.php?mod=logging&action=login&loginsubmit=yes&loginhash={loginhash}&inajax=1'
-        form_data = {
+
+        headers = copy(self._common_headers)
+        headers["origin"] = f'https://{self.hostname}'
+        headers["referer"] = f'https://{self.hostname}/'
+        payload = {
             'formhash': formhash,
             'referer': f'https://{self.hostname}/',
-            'loginfield': self.username,
-            'username': self.username,
-            'password': self.password,
-            'questionid': self.questionid,
-            'answer': self.answer,
+            'loginfield': username,
+            'username': username,
+            'password': password,
+            'questionid': questionid,
+            'answer': answer,
             'cookietime': 2592000
         }
-        login_rst = self.session.post(login_url, proxies=self.proxies, data=form_data, headers=headers)
-        if self.session.cookies.get('yj0M_ada2_auth'):
-            print(f'Welcome {self.username}!')
+
+        resp = self.session.post(login_url, proxies=self.proxies, data=payload, headers=headers)
+        if resp.status_code == 200 and self.session.cookies.get('yj0M_ada2_auth'):
+            self.username = username
+            logger.info(f'{username} 登录成功!')
         else:
             raise ValueError('Verify Failed! Check your username and password!')
 
     def credit(self):
-        headers = {
-            "user-agent": self.userAgent,
-        }
         credit_url = f"https://{self.hostname}/home.php?mod=spacecp&ac=credit&showcredit=1&inajax=1&ajaxtarget=extcreditmenu_menu"
+
         credit_rst = self.session.get(credit_url).text
         credit_soup = BeautifulSoup(credit_rst, "lxml")
         hcredit_2 = credit_soup.find("span", id="hcredit_2").string
 
-        print("昵称: %s 银币: %s" % (self.username, hcredit_2))
+        logger.info(f"{self.username} 现在拥有 {hcredit_2} 枚银币。")
 
     def space_form_hash(self):
         rst = self.session.get(f'https://{self.hostname}/home.php').text
@@ -75,28 +84,35 @@ class SouShuBaClient:
         return formhash
 
     def space(self):
-        headers = {
-            "origin": f'https://{self.hostname}',
-            "referer": f'https://{self.hostname}/home.php',
-            "user-agent": self.userAgent,
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
         formhash = self.space_form_hash()
         space_url = f"https://{self.hostname}/home.php?mod=spacecp&ac=doing&handlekey=doing&inajax=1"
 
+        headers = copy(self._common_headers)
+        headers["origin"] = f'https://{self.hostname}'
+        headers["referer"] = f'https://{self.hostname}/'
+        headers["Content-Type"] = 'application/x-www-form-urlencoded'
+
         for x in range(5):
-            form_data = {
+            payload = {
                 "message": "开心赚银币 {0} 次".format(x + 1).encode("GBK"),
                 "addsubmit": "true",
                 "spacenote": "true",
                 "referer": "home.php",
                 "formhash": formhash
             }
-            resp = self.session.post(space_url, proxies=self.proxies, data=form_data, headers=headers)
+            resp = self.session.post(space_url, proxies=self.proxies, data=payload, headers=headers)
             if re.search("操作成功", resp.text):
-                print('第 {} 次发布成功!'.format(x + 1))
-            time.sleep(120)
+                logger.info(f'{self.username} 发布第 {x + 1} 次空间动态成功!')
+                time.sleep(120)
+            else:
+                raise ValueError(f'{self.username} 发布第 {x + 1} 次空间动态失败!')
 
 
 if __name__ == '__main__':
-    SouShuBaClient.user_qiandao('waterfire.allbookdown.com', 'username', 'password')
+    try:
+        client = SouShuBaClient('waterfire.allbookdown.com')
+        client.login('username', 'password')
+        client.space()
+        client.credit()
+    except Exception as e:
+        logger.error(e)
