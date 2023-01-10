@@ -1,10 +1,15 @@
+# -*- coding: utf-8 -*-
+"""
+实现搜书吧论坛登入和发布空间动态
+"""
 import re
 import requests
 from bs4 import BeautifulSoup
 import time
 
 
-class SouShu8Login:
+
+class SouShuBaClient:
     userAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"
 
     def __init__(self, hostname, username, password, questionid='0', answer=None, proxies=None):
@@ -18,7 +23,7 @@ class SouShu8Login:
 
     @classmethod
     def user_qiandao(cls, hostname, username, password, questionid='0', answer=None, proxies=None):
-        user = SouShu8Login(hostname, username, password, questionid, answer, proxies)
+        user = SouShuBaClient(hostname, username, password, questionid, answer, proxies)
         user.login()
         user.space()
         user.credit()
@@ -94,4 +99,4 @@ class SouShu8Login:
 
 
 if __name__ == '__main__':
-    SouShu8Login.user_qiandao('waterfire.allbookdown.com', 'username', 'password')
+    SouShuBaClient.user_qiandao('waterfire.allbookdown.com', 'username', 'password')
