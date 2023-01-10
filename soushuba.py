@@ -116,3 +116,4 @@ if __name__ == '__main__':
         client.credit()
     except Exception as e:
         logger.error(e)
+        sys.exit(1)
