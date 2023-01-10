@@ -65,7 +65,7 @@ class SouShuBaClient:
         resp = self.session.post(login_url, proxies=self.proxies, data=payload, headers=headers)
         if resp.status_code == 200 and self.session.cookies.get('yj0M_ada2_auth'):
             self.username = username
-            logger.info(f'{username} 登录成功!')
+            logger.info(f'{username} 登录成功!\n20%')
         else:
             raise ValueError('Verify Failed! Check your username and password!')
 
@@ -76,7 +76,7 @@ class SouShuBaClient:
         credit_soup = BeautifulSoup(credit_rst, "lxml")
         hcredit_2 = credit_soup.find("span", id="hcredit_2").string
 
-        logger.info(f"{self.username} 现在拥有 {hcredit_2} 枚银币。")
+        logger.info(f"{self.username} 现在拥有 {hcredit_2} 枚银币。\n100%")
 
     def space_form_hash(self):
         rst = self.session.get(f'https://{self.hostname}/home.php').text
@@ -102,7 +102,7 @@ class SouShuBaClient:
             }
             resp = self.session.post(space_url, proxies=self.proxies, data=payload, headers=headers)
             if re.search("操作成功", resp.text):
-                logger.info(f'{self.username} 发布第 {x + 1} 次空间动态成功!')
+                logger.info(f'{self.username} 发布第 {x + 1} 次空间动态成功!\n{int(100 * (3 + x) / 10)}%')
                 time.sleep(120)
             else:
                 raise ValueError(f'{self.username} 发布第 {x + 1} 次空间动态失败!')
