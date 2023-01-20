@@ -11,6 +11,8 @@ from bs4 import BeautifulSoup
 import time
 import logging
 
+import config as cfg
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -111,7 +113,7 @@ class SouShuBaClient:
 if __name__ == '__main__':
     try:
         client = SouShuBaClient('waterfire.allbookdown.com')
-        client.login('username', 'password')
+        client.login(cfg.username, cfg.password)
         client.space()
         client.credit()
     except Exception as e:
