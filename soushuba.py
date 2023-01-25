@@ -78,7 +78,7 @@ class SouShuBaClient:
         credit_soup = BeautifulSoup(credit_rst, "lxml")
         hcredit_2 = credit_soup.find("span", id="hcredit_2").string
 
-        logger.info(f"{self.username} 现在拥有 {hcredit_2} 枚银币。\n100%")
+        return hcredit_2
 
     def space_form_hash(self):
         rst = self.session.get(f'https://{self.hostname}/home.php').text
@@ -115,7 +115,10 @@ if __name__ == '__main__':
         client = SouShuBaClient('waterfire.allbookdown.com')
         client.login(cfg.username, cfg.password)
         client.space()
-        client.credit()
+        credit = client.credit()
+        logger.info('{0}\n100%\n{{ "complete": 1, "code": 0, "description": "{0}" }}'.format(
+            f"{cfg.username} 现在拥有 {credit} 枚银币。"))
     except Exception as e:
         logger.error(e)
+        logger.info('{0}\n100%\n{{ "complete": 0, "code": 1, "description": "{0}" }}'.format(e))
         sys.exit(1)
