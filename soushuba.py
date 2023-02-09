@@ -65,7 +65,7 @@ class SouShuBaClient:
         }
 
         resp = self.session.post(login_url, proxies=self.proxies, data=payload, headers=headers)
-        if resp.status_code == 200 and self.session.cookies.get('yj0M_ada2_auth'):
+        if resp.status_code == 200 and self.session.cookies.get('yj0M_af16_auth'):
             self.username = username
             logger.info(f'{username} 登录成功!\n20%')
         else:
@@ -112,7 +112,7 @@ class SouShuBaClient:
 
 if __name__ == '__main__':
     try:
-        client = SouShuBaClient('waterfire.allbookdown.com')
+        client = SouShuBaClient('www.feb.sbooook.com')
         client.login(cfg.username, cfg.password)
         client.space()
         credit = client.credit()
