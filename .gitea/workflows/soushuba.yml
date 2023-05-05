@@ -1,6 +1,5 @@
-name: Run QianDao
+name: Run soushuba qiandao
 on:
-  repository_dispatch:
   schedule:
     - cron: '0 21 * * *'
 
