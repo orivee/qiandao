@@ -121,5 +121,4 @@ if __name__ == '__main__':
         credit = client.credit()
     except Exception as e:
         logger.error(e)
-        logger.info('{0}\n100%\n{{ "complete": 0, "code": 1, "description": "{0}" }}'.format(e))
         sys.exit(1)
