@@ -77,8 +77,10 @@ class SouShuBaClient:
         credit_url = f"https://{self.hostname}/home.php?mod=spacecp&ac=credit&showcredit=1&inajax=1&ajaxtarget=extcreditmenu_menu"
 
         credit_rst = self.session.get(credit_url).text
-        credit_soup = BeautifulSoup(credit_rst, "lxml")
-        hcredit_2 = credit_soup.find("span", id="hcredit_2").string
+        credit_soup = BeautifulSoup(credit_rst, features="lxml-xml")
+        cdata_rst = credit_soup.find("root").string
+        cdata_soup = BeautifulSoup(cdata_rst, features="lxml")
+        hcredit_2 = cdata_soup.find("span", id="hcredit_2").string
 
         return hcredit_2
 
@@ -114,10 +116,10 @@ class SouShuBaClient:
 if __name__ == '__main__':
     try:
         client = SouShuBaClient(os.environ.get('SOUSHUBA_HOSTNAME', 'www.ttv.momo0824.com'),
-                                os.environ.get('SOUSHUBA_USERNAME'),
-                                os.environ.get('SOUSHUBA_PASSWORD'))
+                                os.environ.get('SOUSHUBA_USERNAME', 'libesse'),
+                                os.environ.get('SOUSHUBA_PASSWORD', 'yF9pnSBLH3wpnLd'))
         client.login()
-        client.space()
+        # client.space()
         credit = client.credit()
     except Exception as e:
         logger.error(e)
