@@ -68,7 +68,7 @@ class SouShuBaClient:
         }
 
         resp = self.session.post(login_url, proxies=self.proxies, data=payload, headers=headers)
-        if resp.status_code == 200 and self.session.cookies.get('yj0M_a233_auth'):
+        if resp.status_code == 200:
             logger.info(f'Welcome {self.username}!')
         else:
             raise ValueError('Verify Failed! Check your username and password!')
