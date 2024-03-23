@@ -9,6 +9,8 @@ from copy import copy
 
 import requests
 from bs4 import BeautifulSoup
+from urllib.parse import urlparse
+import xml.etree.ElementTree as ET
 import time
 import logging
 
@@ -21,6 +23,37 @@ ch.setLevel(logging.INFO)
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
+def get_refresh_url(url: str):
+    try:
+        response = requests.get(url)
+        if response.status_code != 403:
+            response.raise_for_status()
+
+        soup = BeautifulSoup(response.text, 'html.parser')
+        meta_tags = soup.find_all('meta', {'http-equiv': 'refresh'})
+
+        if meta_tags:
+            content = meta_tags[0].get('content', '')
+            if 'url=' in content:
+                redirect_url = content.split('url=')[1].strip()
+                print(f"Redirecting to: {redirect_url}")
+                return redirect_url
+        else:
+            print("No meta refresh tag found.")
+            return None
+    except Exception as e:
+        print(f'An unexpected error occurred: {e}')
+        return None
+
+def get_url(url: str):
+    resp = requests.get(url)
+    soup = BeautifulSoup(resp.content, 'html.parser')
+    
+    links = soup.find_all('a', href=True)
+    for link in links:
+        if link.text == "搜书吧入口":
+            return link['href']
+    return None
 
 class SouShuBaClient:
 
@@ -48,7 +81,7 @@ class SouShuBaClient:
         formhash = re.search(r'<input type="hidden" name="formhash" value="(.+?)" />', rst).group(1)
         return loginhash, formhash
 
-    def login(self, ):
+    def login(self):
         """Login with username and password"""
         loginhash, formhash = self.login_form_hash()
         login_url = f'https://{self.hostname}/member.php?mod=logging&action=login&loginsubmit=yes' \
@@ -75,11 +108,14 @@ class SouShuBaClient:
 
     def credit(self):
         credit_url = f"https://{self.hostname}/home.php?mod=spacecp&ac=credit&showcredit=1&inajax=1&ajaxtarget=extcreditmenu_menu"
-
         credit_rst = self.session.get(credit_url).text
-        credit_soup = BeautifulSoup(credit_rst, features="lxml-xml")
-        cdata_rst = credit_soup.find("root").string
-        cdata_soup = BeautifulSoup(cdata_rst, features="lxml")
+
+        # 解析 XML，提取 CDATA
+        root = ET.fromstring(str(credit_rst))
+        cdata_content = root.text
+
+        # 使用 BeautifulSoup 解析 CDATA 内容
+        cdata_soup = BeautifulSoup(cdata_content, features="lxml")
         hcredit_2 = cdata_soup.find("span", id="hcredit_2").string
 
         return hcredit_2
@@ -115,11 +151,15 @@ class SouShuBaClient:
 
 if __name__ == '__main__':
     try:
-        client = SouShuBaClient(os.environ.get('SOUSHUBA_HOSTNAME', 'www.ttv.momo0824.com'),
-                                os.environ.get('SOUSHUBA_USERNAME', 'libesse'),
-                                os.environ.get('SOUSHUBA_PASSWORD', 'yF9pnSBLH3wpnLd'))
+        redirect_url = get_refresh_url('http://' + os.environ.get('SOUSHUBA_HOSTNAME', 'www.soushu2025.com'))
+        time.sleep(2)
+        redirect_url2 = get_refresh_url(redirect_url)
+        url = get_url(redirect_url2)
+        client = SouShuBaClient(urlparse(url).hostname,
+                                os.environ.get('SOUSHUBA_USERNAME'),
+                                os.environ.get('SOUSHUBA_PASSWORD'))
         client.login()
-        # client.space()
+        client.space()
         credit = client.credit()
     except Exception as e:
         logger.error(e)
