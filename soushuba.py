@@ -162,6 +162,7 @@ if __name__ == '__main__':
         client.login()
         client.space()
         credit = client.credit()
+        logger.info(f'{client.username} have {credit} coins!')
     except Exception as e:
         logger.error(e)
         sys.exit(1)
