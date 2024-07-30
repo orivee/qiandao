@@ -69,7 +69,7 @@ class SouShuBaClient:
             "Host": f"{ hostname }",
             "Connection": "keep-alive",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
             "Accept-Language": "zh-CN,cn;q=0.9",
             "Content-Type": "application/x-www-form-urlencoded",
         }
@@ -131,7 +131,7 @@ class SouShuBaClient:
 
         headers = copy(self._common_headers)
         headers["origin"] = f'https://{self.hostname}'
-        headers["referer"] = f'https://{self.hostname}/'
+        headers["referer"] = f'https://{self.hostname}/home.php'
 
         for x in range(5):
             payload = {
@@ -155,9 +155,10 @@ if __name__ == '__main__':
         time.sleep(2)
         redirect_url2 = get_refresh_url(redirect_url)
         url = get_url(redirect_url2)
+        logger.info(f'{url}')
         client = SouShuBaClient(urlparse(url).hostname,
-                                os.environ.get('SOUSHUBA_USERNAME'),
-                                os.environ.get('SOUSHUBA_PASSWORD'))
+                                os.environ.get('SOUSHUBA_USERNAME', "libesse"),
+                                os.environ.get('SOUSHUBA_PASSWORD', "yF9pnSBLH3wpnLd"))
         client.login()
         client.space()
         credit = client.credit()
