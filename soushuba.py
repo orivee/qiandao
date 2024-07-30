@@ -51,7 +51,7 @@ def get_url(url: str):
     
     links = soup.find_all('a', href=True)
     for link in links:
-        if link.text == "搜书吧入口":
+        if link.text == "搜书吧":
             return link['href']
     return None
 
