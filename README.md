@@ -6,8 +6,8 @@
 
 为了能够自动签到，需要设置几个 Actions secrets，如下：
 
-| secrets           | 说明         | 例子                     |
-| ----------------- | ------------ | ------------------------ |
-| SOUSHUBA_HOSTNAME | 搜书吧域名   | `www.apr.soushu2029.com` |
-| SOUSHUBA_USERNAME | 搜书吧用户名 |                          |
-| SOUSHUBA_PASSWORD | 搜书吧密码   |                          |
+| secrets           | 说明           | 例子                 |
+| ----------------- | -------------- | -------------------- |
+| SOUSHUBA_HOSTNAME | 搜书吧永久地址 | `www.soushu2030.com` |
+| SOUSHUBA_USERNAME | 搜书吧用户名   |                      |
+| SOUSHUBA_PASSWORD | 搜书吧密码     |                      |
